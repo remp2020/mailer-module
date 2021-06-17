@@ -1,0 +1,118 @@
+{form newBatchForm}
+    <div n:if="$form->getErrors()" n:inner-foreach="$form->getErrors() as $error" class="alert alert-danger" role="alert">
+        {$error}<br>
+    </div>
+
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="row form-group" n:ifset="$control['newBatchForm']['segment_code']">
+                <div class="col-sm-12">
+                    {label segment_code /}
+                    {input segment_code, class => 'selectpicker', data-live-search => 'true', data-live-search-normalize => 'true'}
+                </div>
+            </div>
+
+            <div class="row form-group">
+                <div class="col-sm-12">
+                    {label method /}
+                    {input method, class => 'selectpicker'}
+                </div>
+            </div>
+
+            <div class="row form-group">
+                <div class="col-sm-12">
+                    {label mail_type_id /}
+                    {input mail_type_id, class => 'selectpicker',  data-live-search => 'true', data-live-search-normalize => 'true'}
+                </div>
+                <div class="col-sm-12">
+                    {label template_id /}
+                    {snippet template_id}
+                    {input template_id, class => 'selectpicker',  data-live-search => 'true', data-live-search-normalize => 'true'}
+                    {/snippet}
+                </div>
+            </div>
+
+            <div class="row form-group">
+                <div class="col-sm-12">
+                    {label b_mail_type_id /}
+                    {input b_mail_type_id, class => 'selectpicker',  data-live-search => 'true', data-live-search-normalize => 'true'}
+                </div>
+                <div class="col-sm-12">
+                    {label b_template_id /}
+                    {snippet b_template_id}
+                    {input b_template_id, class => 'selectpicker',  data-live-search => 'true', data-live-search-normalize => 'true'}
+                    {/snippet}
+                </div>
+            </div>
+
+            <div class="row form-group m-t-30">
+                <div class="col-sm-12">
+                    {label email_count /}
+                    {input email_count, class => 'form-control fg-input'}
+                </div>
+            </div>
+
+            <div class="row form-group">
+                <div class="col-sm-12">
+                    {label start_at/}
+                    {input start_at, class => 'form-control date-time-picker', autocomplete => 'off'}
+                </div>
+            </div>
+
+            <div class="row form-group">
+                <div class="col-sm-12">
+                    {input save, class => 'btn btn-info waves-effect'}
+                    {input save_start, class => 'btn btn-info waves-effect'}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {include jsCallback, form => $form}
+    {include onChangeCallback, input => mail_type_id, target => template_id}
+    {include onChangeCallback, input => b_mail_type_id, target => b_template_id}
+{/form}
+
+
+{define jsCallback}
+<script n:if="$form->getErrors()" type="application/javascript">
+    $(function() {
+        var index = 0;
+        {foreach $form->getErrors() as $error}
+        index += 250;
+        window.setTimeout(function() {
+            $.notify({
+                message: {$error}
+            }, {
+                allow_dismiss: false,
+                type: 'danger'
+            });
+        }, index);
+        {/foreach}
+    });
+</script>
+{/define}
+
+{define onChangeCallback}
+    <script>
+        $('#' + {$control['newBatchForm'][$input]->htmlId}).off('change').on('change', function () {
+            $.nette.ajax({
+                type: 'GET',
+                url: {link templatesByListId!},
+                data: {
+                    'sourceForm': 'newBatchForm',
+                    'listId': $(this).val(),
+                    'sourceField': {$input},
+                    'targetField': {$target},
+                    'snippet': {$target}
+                },
+                before: function() {
+                    $('#' + {$control['newBatchForm'][$target]->htmlId}).empty();
+                },
+                complete: function() {
+                    $('#' + {$control['newBatchForm']->getElementPrototype()->id} + ' .selectpicker').selectpicker('refresh');
+                }
+            });
+        });
+    </script>
+{/define}

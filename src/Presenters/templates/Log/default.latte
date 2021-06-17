@@ -1,0 +1,13 @@
+{layout '../@layout.latte'}
+
+{block #content}
+
+<div class="c-header">
+    <h2 n:block="title">Mail logs</h2>
+</div>
+<div class="card">
+    <div class="card-header">
+        <h2>List of mail logs<small></small></h2>
+    </div>
+    {control dataTableDefault}
+</div>

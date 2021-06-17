@@ -1,0 +1,143 @@
+<style>
+    .field_error {
+        display: block;
+        padding: 2px 5px;
+        color: white;
+        background-color: #f44336;
+    }
+</style>
+
+{form templateForm}
+    {include jsValidation, form => $form}
+    {input id}
+
+    <div role="tabpanel">
+        <ul class="tab-nav" role="tablist">
+            <li class="active"><a href="#general" aria-controls="general" role="tab" data-toggle="tab" aria-expanded="true">General</a></li>
+            <li class=""><a href="#email" aria-controls="email" role="tab" data-toggle="tab" aria-expanded="false">Email Composition</a></li>
+        </ul>
+
+        <div class="tab-content">
+            <div role="tabpanel" class="tab-pane active m-t-30" id="general">
+                <div class="form-group fg-float">
+                    <div class="fg-line">
+                        {input name, class => 'form-control fg-input'}
+                        {label name, class => 'fg-label' /}
+                    </div>
+                </div>
+
+                <div class="form-group fg-float">
+                    <div class="fg-line">
+                        {input code, class => 'form-control fg-input'}
+                        {label code, class => 'fg-label' /}
+                    </div>
+                    {if $form['code']->hasErrors()}
+                        <span class="field_error">{$form['code']->error}</span>
+                    {/if}
+                </div>
+
+                <div class="form-group fg-float">
+                    <div class="fg-line">
+                        {input description, class => 'form-control fg-input'}
+                        {label description, class => 'fg-label' /}
+                    </div>
+                </div>
+
+                <div class="form-group fg-float">
+                    {label mail_type_id /}
+                    {input mail_type_id, class => 'selectpicker',  data-live-search => 'true', data-live-search-normalize => 'true'}
+                </div>
+
+                <div class="form-group fg-float">
+                    <div class="fg-line">
+                        {input from, class => 'form-control fg-input'}
+                        {label from, class => 'fg-label' /}
+                    </div>
+                </div>
+
+                <div class="form-group fg-float">
+                    <div class="fg-line">
+                        {input subject, class => 'form-control fg-input'}
+                        {label subject, class => 'fg-label' /}
+                    </div>
+                </div>
+
+                <div class="form-group fg-float">
+                    {label click_tracking /}
+                    <i title="Works only if selected mailer supports email tracking." class="zmdi zmdi-info"></i>
+                    {input click_tracking, class => 'selectpicker'}
+                </div>
+
+            </div>
+
+            <div role="tabpanel" class="tab-pane" id="email">
+                <div class="form-group js-mail-layouts-templates" data-mail-layouts="{json_encode($layouts)}">
+                    {label mail_layout_id /}
+                    {input mail_layout_id, class => 'selectpicker',  data-live-search => 'true', data-live-search-normalize => 'true'}
+                </div>
+
+                <div class="form-group fg-float" style="margin-top: 50px">
+                    <div class="fg-line">
+                        {input mail_body_text, class => 'form-control fg-input auto-size'}
+                        {label mail_body_text, class => 'fg-label' /}
+                    </div>
+                </div>
+
+                <div class="js-editor-choice">
+                    <label class="radio radio-inline m-r-20">
+                        <input type="radio" name="js-editor-choice" value="code" {if $templateEditor != 'wysiwyg'}checked="checked"{/if} class="js-editor-choice">
+                        <i class="input-helper"></i>
+                        HTML Code View
+                    </label>
+                    <label class="radio radio-inline m-r-20">
+                        <input type="radio" name="js-editor-choice" value="editor" {if $templateEditor == 'wysiwyg'}checked="checked"{/if} class="js-editor-choice">
+                        <i class="input-helper"></i>
+                        Editor View (WYSIWYG)
+                    </label>
+                </div>
+
+                <div class="form-group m-b-30">
+                    {input mail_body_html, class => 'form-control js-mail-body-html-input js-html-editor', data-snippets => json_encode($snippets) }
+                </div>
+                <div class="js-codemirror"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        <div class="fg-line">
+            {input save, class => 'btn btn-info waves-effect'}
+            {input save_close, class => 'btn btn-info waves-effect'}
+        </div>
+    </div>
+{/form}
+
+
+{define jsValidation}
+    <script>
+         Nette.validators.RempMailerModuleFormsRulesFormRules_validateAdvancedEmail = function (element, args, value) {
+             const regexp = /^(.+) +<(.*)>$/i;
+             const email = value.match(regexp);
+             if (email !== null) {
+                 value = email[2];
+             }
+             return Nette.validateRule(element, ':email', args, { 'value': value });
+         };
+    </script>
+    <script n:if="$form->getErrors()">
+        $(function() {
+            let index = 0;
+            {foreach $form->getErrors() as $error}
+            index += 250;
+            window.setTimeout(function() {
+                $.notify({
+                    message: {$error}
+                }, {
+                    allow_dismiss: false,
+                    type: 'danger'
+                });
+            }, index);
+            {/foreach}
+        });
+    </script>
+{/define}
