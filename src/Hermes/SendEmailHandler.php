@@ -26,7 +26,9 @@ class SendEmailHandler implements HandlerInterface
     public function handle(MessageInterface $message): bool
     {
         $payload = $message->getPayload();
-        $mailTemplate = $this->templatesRepository->getByCode($payload['mail_template_code']);
+        $mailTemplate = $this->templatesRepository->ensure(function () use ($payload) {
+            return $this->templatesRepository->getByCode($payload['mail_template_code']);
+        });
         if (!$mailTemplate) {
             Debugger::log("could not load mail template: record with code [{$payload['mail_template_code']}] doesn't exist");
             return false;

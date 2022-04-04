@@ -125,10 +125,12 @@ class RedisDriver implements DriverInterface
 
                 $result = $callback($hermesMessage);
                 if (!$result) {
-                    $this->tasksRepository->add(
-                        $hermesMessage,
-                        HermesTasksRepository::STATE_ERROR
-                    );
+                    $this->tasksRepository->ensure(function () use ($hermesMessage) {
+                        $this->tasksRepository->add(
+                            $hermesMessage,
+                            HermesTasksRepository::STATE_ERROR
+                        );
+                    });
                 }
                 $this->incrementProcessedItems();
                 break;

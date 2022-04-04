@@ -46,7 +46,9 @@ class TrackNewsletterArticlesHandler implements HandlerInterface
             throw new HermesException('unable to handle event: status is missing');
         }
 
-        $batch = $this->batchesRepository->find($payload['mail_job_batch_id']);
+        $batch = $this->batchesRepository->ensure(function () use ($payload) {
+            return $this->batchesRepository->find($payload['mail_job_batch_id']);
+        });
         if (!$batch) {
             throw new HermesException('unable to handle event: mail job batch not found');
         }
@@ -54,7 +56,9 @@ class TrackNewsletterArticlesHandler implements HandlerInterface
             return true;
         }
 
-        $batchTemplates = $this->batchTemplatesRepository->findByBatchId($batch->id);
+        $batchTemplates = $this->batchTemplatesRepository->ensure(function () use ($batch) {
+            return $this->batchTemplatesRepository->findByBatchId($batch->id);
+        });
         foreach ($batchTemplates as $batchTemplate) {
             preg_match_all('/<a.*?href="([^"]*?)".*?>/i', $batchTemplate->mail_template->mail_body_html, $matches);
             $matches = array_unique($matches[1]);

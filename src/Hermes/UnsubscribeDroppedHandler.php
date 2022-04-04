@@ -38,22 +38,29 @@ class UnsubscribeDroppedHandler implements HandlerInterface
     {
         $payload = $message->getPayload();
 
-        $lastEmails = $this->logsRepository
-            ->getEmailLogs($payload['email'])
-            ->limit($this->threshold)
-            ->fetchPairs('id', 'dropped_at');
+        $lastEmails = $this->logsRepository->ensure(function () use ($payload) {
+            return $this->logsRepository
+                ->getEmailLogs($payload['email'])
+                ->limit($this->threshold)
+                ->fetchPairs('id', 'dropped_at');
+        });
 
         $droppedEmails = array_filter($lastEmails);
         if (count($droppedEmails) < $this->threshold) {
             return true;
         }
 
-        $types = $this->mailTypesRepository->all();
+        $types = $this->mailTypesRepository->ensure(function () {
+            return $this->mailTypesRepository->all();
+        });
         foreach ($types as $type) {
             if ($type->locked) {
                 continue;
             }
-            $this->userSubscriptionsRepository->unsubscribeEmail($type, $payload['email']);
+
+            $this->userSubscriptionsRepository->ensure(function () use ($type, $payload) {
+                $this->userSubscriptionsRepository->unsubscribeEmail($type, $payload['email']);
+            });
         }
 
         return true;
