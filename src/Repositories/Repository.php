@@ -3,9 +3,11 @@ declare(strict_types=1);
 
 namespace Remp\MailerModule\Repositories;
 
+use Closure;
 use Nette\Caching\Storage;
 use Nette\Utils\DateTime;
 use Nette\Database\Context;
+use Throwable;
 
 class Repository
 {
@@ -48,6 +50,19 @@ class Repository
     public function getDatabase(): Context
     {
         return $this->database;
+    }
+
+    public function ensure(Closure $callback, int $retryTimes = 1)
+    {
+        try {
+            return $callback($this);
+        } catch (Throwable $e) {
+            if ($retryTimes === 0) {
+                throw $e;
+            }
+            $this->database->getConnection()->reconnect();
+            return $this->ensure($callback, $retryTimes - 1);
+        }
     }
 
     /**

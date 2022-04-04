@@ -43,7 +43,9 @@ class MailgunEventHandler implements HandlerInterface
             throw new HermesException('unable to handle event: event is missing');
         }
 
-        $log = $this->logsRepository->findBySenderId($payload['mail_sender_id']);
+        $log = $this->logsRepository->ensure(function () use ($payload) {
+            return $this->logsRepository->findBySenderId($payload['mail_sender_id']);
+        });
         if (!$log) {
             return false;
         }
@@ -51,19 +53,27 @@ class MailgunEventHandler implements HandlerInterface
         $eventTimestamp = explode('.', (string) $payload['timestamp'])[0];
         $date = DateTime::from($eventTimestamp);
 
-        $mailgunEvent = $this->logsRepository->mapEvent($payload['event'], $payload['reason']);
+        $mailgunEvent = $this->logsRepository->ensure(function () use ($payload) {
+            return $this->logsRepository->mapEvent($payload['event'], $payload['reason']);
+        });
         if (!$mailgunEvent) {
             return false;
         }
 
-        $this->logsRepository->update($log, [
-            $mailgunEvent => $date,
-            'updated_at' => new DateTime(),
-        ]);
+        $this->logsRepository->ensure(function () use ($log, $mailgunEvent, $date) {
+            $this->logsRepository->update($log, [
+                $mailgunEvent => $date,
+                'updated_at' => new DateTime(),
+            ]);
+        });
 
-        $column = $this->batchTemplatesRepository->mapEvent($mailgunEvent);
+        $column = $this->batchTemplatesRepository->ensure(function () use ($mailgunEvent) {
+            return $this->batchTemplatesRepository->mapEvent($mailgunEvent);
+        });
         if (isset($column)) {
-            $this->batchTemplatesRepository->incrementColumn($column, $log->mail_template_id, $log->mail_job_batch_id);
+            $this->batchTemplatesRepository->ensure(function () use ($column, $log) {
+                $this->batchTemplatesRepository->incrementColumn($column, $log->mail_template_id, $log->mail_job_batch_id);
+            });
         }
 
         if ($payload['event'] === 'dropped') {

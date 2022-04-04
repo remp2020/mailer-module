@@ -38,16 +38,22 @@ class ListCreatedHandler implements HandlerInterface
             throw new HermesException('unable to handle event: mail_type_id is missing');
         }
 
-        $list = $this->listsRepository->find($payload['list_id']);
+        $list = $this->listsRepository->ensure(function () use ($payload) {
+            return $this->listsRepository->find($payload['list_id']);
+        });
 
         $page = 1;
         while ($users = $this->userProvider->list([], $page)) {
             foreach ($users as $user) {
                 $this->logger->log(LogLevel::INFO, sprintf("Subscribing user: %s (%s).", $user['email'], $user['id']));
                 if ($list->auto_subscribe) {
-                    $this->userSubscriptionsRepository->subscribeUser($list, $user['id'], $user['email']);
+                    $this->userSubscriptionsRepository->ensure(function () use ($list, $user) {
+                        $this->userSubscriptionsRepository->subscribeUser($list, $user['id'], $user['email']);
+                    });
                 } else {
-                    $this->userSubscriptionsRepository->unsubscribeUser($list, $user['id'], $user['email']);
+                    $this->userSubscriptionsRepository->ensure(function () use ($list, $user) {
+                        $this->userSubscriptionsRepository->unsubscribeUser($list, $user['id'], $user['email']);
+                    });
                 }
             }
             $page++;

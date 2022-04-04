@@ -53,7 +53,9 @@ class SubscribeHandler implements HandlerInterface
             return true;
         }
 
-        $welcomeEmail = $this->mailTypesRepository->find($payload['mail_type_id'])->subscribe_mail_template;
+        $welcomeEmail = $this->mailTypesRepository->ensure(function () use ($payload) {
+            return $this->mailTypesRepository->find($payload['mail_type_id'])->subscribe_mail_template;
+        });
 
         if (!$welcomeEmail) {
             return true;

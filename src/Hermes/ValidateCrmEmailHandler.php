@@ -40,7 +40,9 @@ class ValidateCrmEmailHandler implements HandlerInterface
             return true;
         }
 
-        $log = $this->logsRepository->findBySenderId($payload['mail_sender_id']);
+        $log = $this->logsRepository->ensure(function () use ($payload) {
+            return $this->logsRepository->findBySenderId($payload['mail_sender_id']);
+        });
         if (!$log) {
             return false;
         }
