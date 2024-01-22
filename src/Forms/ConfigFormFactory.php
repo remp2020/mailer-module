@@ -123,7 +123,8 @@ class ConfigFormFactory
                         break;
                     case Config::TYPE_BOOLEAN:
                         $othersContainer->addCheckbox($config['name'], $config['display_name'])
-                            ->setDefaultValue($config['value']);
+                            ->setDefaultValue($config['value'])
+                            ->setOption('description', $config['description']);
                         break;
                     case Config::TYPE_INT:
                         $othersContainer->addText($config['name'], $config['display_name'])
